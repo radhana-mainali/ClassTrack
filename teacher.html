@@ -57,19 +57,32 @@
                 const c = doc.data();
                 const available = c.total_quantity - c.checked_out;
 
-                const row = `
-                <tr>
+                let row = `<tr>
                     <td>${c.name}</td>
-                    <td>${c.type}</td>
-                    <td>${c.total_quantity}</td>
-                    <td>${available}</td>
-                    <td>${c.damaged}</td>
-                    <td>
+                    <td>${c.type}</td>`;
+
+                if (c.type === "bulk") {
+                    const available = c.total_quantity - c.checked_out;
+                    row += `
+                        <td>${c.total_quantity}</td>
+                        <td>${available}</td>
+                        <td>${c.damaged}</td>
+                        <td>
                         <button onclick="editQuantity('${doc.id}', ${c.total_quantity})">Edit</button>
                         <button onclick="deleteComponent('${doc.id}')">Delete</button>
-                    </td>
-                </tr>
-                `;
+                        </td>
+                    `;
+                } else {
+                    row += `
+                        <td colspan="3">Managed Individually</td>
+                        <td>
+                        <button onclick="deleteComponent('${doc.id}')">Delete</button>
+                        </td>
+                    `;
+                }
+
+                row += `</tr>`;
+                table.innerHTML += row;
                 table.innerHTML += row;
             });
         });
