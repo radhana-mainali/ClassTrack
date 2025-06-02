@@ -1,1 +1,144 @@
-<h1>Welcome, Student!</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ClassTrack – Student</title>
+</head>
+<body>
+    <h1 id="welcomeMsg">Welcome!</h1>
+        <table border="1">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Total</th>
+                <th>Available</th>
+                <th>Damaged</th>
+                <th>Action</th>
+
+      </tr>
+    </thead>
+    <tbody id="componentTable">
+      <!-- JS will insert rows here -->
+    </tbody>
+  </table>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+  <!-- Firebase config -->
+  <script src="firebase.js"></script>
+
+  <!-- Page logic -->
+  <script>
+    firebase.auth().onAuthStateChanged(user => {
+        if (user) {
+            const firstName = user.displayName.split(" ")[0];
+            document.getElementById("welcomeMsg").innerText = `Welcome, ${firstName}!`;
+        } else {
+            window.location.href = "index.html"; // Redirect if not logged in
+        }
+    });
+
+    db.collection("components").get().then(snapshot => {
+        const table = document.getElementById("componentTable");
+
+        snapshot.forEach(doc => {
+            const c = doc.data();
+            const available = c.total_quantity - c.checked_out;
+
+            const row = `
+            <tr>
+                <td>${c.name}</td>
+                <td>${c.type}</td>
+                <td>${c.total_quantity}</td>
+                <td>${available}</td>
+                <td>${c.damaged}</td>
+                <td>
+                    <button onclick="checkOutComponent('${doc.id}', '${c.name}', ${available})">Check Out</button>
+                    <button onclick="returnComponent('${doc.id}', '${c.name}', ${c.checked_out})">Return</button>
+                    <button onclick="reportDamage('${doc.id}', '${c.name}')">Report Damage</button>
+                </td>
+            </tr>
+            `;
+        table.innerHTML += row;
+      });
+    });
+
+    // check out function:
+    function checkOutComponent(docId, name, available) {
+        const amount = parseInt(prompt(`How many '${name}' do you want to check out? (Available: ${available})`));
+        if (!amount || amount < 1 || amount > available) {
+            alert("Invalid quantity.");
+            return;
+        }
+
+        const ref = db.collection("components").doc(docId);
+
+        ref.update({
+            checked_out: firebase.firestore.FieldValue.increment(amount)
+        }).then(() => {
+            alert(`Successfully checked out ${amount} ${name}.`);
+            location.reload();
+        }).catch(error => {
+            alert("Error checking out: " + error.message);
+        });
+    }
+
+    // return function:
+    function returnComponent(docId, name, currentlyOut) {
+        const amount = parseInt(prompt(`How many '${name}' would you like to return? (Checked out: ${currentlyOut})`));
+        if (!amount || amount < 1 || amount > currentlyOut) {
+            alert("Invalid quantity.");
+            return;
+        }
+
+        const ref = db.collection("components").doc(docId);
+
+        ref.update({
+            checked_out: firebase.firestore.FieldValue.increment(-amount)
+        }).then(() => {
+            alert(`Successfully returned ${amount} ${name}.`);
+            location.reload();
+        }).catch(error => {
+            alert("Error returning item: " + error.message);
+        });
+    }
+
+    // report damage function:
+    function reportDamage(docId, name) {
+        const amount = parseInt(prompt(`How many '${name}' would you like to report as damaged?`));
+
+        if (!amount || amount < 1) {
+            alert("Invalid number.");
+            return;
+        }
+
+        // Fetch the current component data first
+        const ref = db.collection("components").doc(docId);
+
+        ref.get().then(doc => {
+            const data = doc.data();
+            const remaining = data.total_quantity - data.damaged;
+
+            if (amount > remaining) {
+            alert(`You can't report more than what's undamaged. Only ${remaining} remaining.`);
+            return;
+            }
+
+            return ref.update({
+            damaged: firebase.firestore.FieldValue.increment(amount)
+            });
+        }).then(() => {
+            alert(`${amount} '${name}' reported as damaged.`);
+            location.reload();
+        }).catch(error => {
+            alert("Error reporting damage: " + error.message);
+        });
+    }
+
+    </script>
+</body>
+</html>
