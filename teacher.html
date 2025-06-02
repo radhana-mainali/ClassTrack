@@ -135,25 +135,29 @@
 
             } else {
                 // Individual component (complex)
-                componentsRef.add({ name, type }).then(docRef => {
-                const itemsRef = docRef.collection("items");
-                const batch = firebase.firestore().batch();
+                const docId = name.replace(/\s+/g, '_').toLowerCase(); // e.g., "Arduino Uno" → "arduino_uno"
+                const docRef = componentsRef.doc(docId);
 
-                for (let i = 1; i <= qty; i++) {
-                    const unitId = `${name.replace(/\s+/g, '_')}_${String(i).padStart(3, '0')}`;
-                    const itemDoc = itemsRef.doc(unitId);
+                docRef.set({ name, type }).then(() => {
+                    
+                    const itemsRef = docRef.collection("items");
+                    const batch = firebase.firestore().batch();
 
-                    batch.set(itemDoc, {
-                    status: "available",
-                    assigned_to: null,
-                    id_tag: unitId
+                    for (let i = 1; i <= qty; i++) {
+                        const unitId = `${name.replace(/\s+/g, '_')}_${String(i).padStart(3, '0')}`;
+                        const itemDoc = itemsRef.doc(unitId);
+
+                        batch.set(itemDoc, {
+                        status: "available",
+                        assigned_to: null,
+                        id_tag: unitId
+                        });
+                    }
+
+                    return batch.commit().then(() => {
+                        alert("Individual component units added.");
+                        location.reload();
                     });
-                }
-
-                return batch.commit().then(() => {
-                    alert("Individual component units added.");
-                    location.reload();
-                });
                 }).catch(error => {
                 alert("Error adding individual component: " + error.message);
                 });
