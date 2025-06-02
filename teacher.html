@@ -6,6 +6,23 @@
 </head>
 <body>
     <h1>Welcome, Teacher!</h1>
+    <h2>Add New Component</h2>
+    <form id="addComponentForm">
+        <label>
+            Name: <input type="text" id="newName" required>
+        </label>
+        <label>
+            Type:
+            <select id="newType">
+                <option value="bulk">Bulk</option>
+                <option value="individual">Individual</option>
+            </select>
+        </label>
+        <label>
+            Quantity: <input type="number" id="newQty" min="0" required>
+        </label>
+        <button type="submit">Add</button>
+    </form>
 
     <table border="1">
         <thead>
@@ -85,7 +102,34 @@
                 }).catch(error => {
                 alert("Error deleting component: " + error.message);
                 });
+        }
+
+        document.getElementById("addComponentForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+
+            const name = document.getElementById("newName").value.trim();
+            const type = document.getElementById("newType").value;
+            const qty  = parseInt(document.getElementById("newQty").value);
+
+            if (!name || qty < 0) {
+                alert("Invalid input.");
+                return;
             }
+
+            firebase.firestore().collection("components").add({
+                name: name,
+                type: type,
+                total_quantity: qty,
+                checked_out: 0,
+                damaged: 0
+            }).then(() => {
+                alert("Component added.");
+                location.reload();
+            }).catch(error => {
+                alert("Error adding component: " + error.message);
+            });
+        });
+
     </script>
 </body>
 </html>
