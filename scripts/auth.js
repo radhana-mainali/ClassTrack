@@ -3,16 +3,24 @@ document.getElementById('loginBtn').addEventListener('click', () => {
 
   auth.signInWithPopup(provider)
     .then(result => {
-      const email = result.user.email;
+        const user = result.user;
+        const uid = user.uid;
 
-      // Simple logic for redirect based on email
-      if (email.includes("teacher")) {
-        window.location.href = "teacher.html";
-      } else {
-        window.location.href = "student.html";
-      }
+        return firebase.firestore().collection("users").doc(uid).get();
+    })
+    .then(doc => {
+        if (doc.exists) {
+            const role = doc.data().role;
+            if (role === "teacher") {
+                window.location.href = "teacher.html";
+            } else {
+                window.location.href = "student.html";
+            }
+        } else {
+            alert("Your account doesn't have a role assigned. Please contact admin.");
+        }
     })
     .catch(error => {
-      console.error("Login error:", error.message);
+        console.error("Login error:", error.message);
     });
 });
