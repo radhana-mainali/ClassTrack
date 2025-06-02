@@ -83,7 +83,6 @@
 
                 row += `</tr>`;
                 table.innerHTML += row;
-                table.innerHTML += row;
             });
         });
 
@@ -133,12 +132,25 @@
 
             if (type === "bulk") {
                 // Bulk component (simple)
-                componentsRef.add({
-                name: name,
-                type: type,
-                total_quantity: qty,
-                checked_out: 0,
-                damaged: 0
+                const docId = name.replace(/\s+/g, '_').toLowerCase();
+                const bulkRef = componentsRef.doc(docId);
+
+                bulkRef.get().then(doc => {
+                    if (doc.exists) {
+                        alert("This component already exists.");
+                        return;
+                    }
+
+                    bulkRef.set({
+                        name: name,
+                        type: type,
+                        total_quantity: qty,
+                        checked_out: 0,
+                        damaged: 0
+                    }).then(() => {
+                        alert("Bulk component added.");
+                        location.reload();
+                    });
                 }).then(() => {
                 alert("Bulk component added.");
                 location.reload();
