@@ -4,6 +4,7 @@ document.getElementById('loginBtn').addEventListener('click', () => {
   auth.signInWithPopup(provider)
     .then(result => {
         const user = result.user;
+        console.log("UID:", result.user.uid);
         const uid = user.uid;
 
         return firebase.firestore().collection("users").doc(uid).get();
